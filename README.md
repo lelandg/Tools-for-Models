@@ -6,11 +6,13 @@ Written to help automate preparation of models created in Masterpiece VR. This a
 Yes, the name of this project is someone tongue-in-cheek. If you missed that, I would not mind you dating my sister... if either one of them was dating. 😇
 
 # Functions:
-Removes doubles from all meshes in a scene, given minimum distance.
+Remove doubles from all meshes in a scene, given minimum distance.
+
 Decimate all meshes, optionally triangulating and mirroring along specified plane.
+
 Undecimate all meshes.
 
-This is my second Blender add-on. Simply open in a text editor in Blender and click "Run Script". (If you don't know how to do that, see below.)
+Simply open the script in a Blender text editor window and click "Run Script". (If you don't know how to do that, see below.)
 
 You should immediately see a panel at the bottom of the Tools tab in any 3D View that looks like this:
 ![Alt text](https://github.com/lelandg/Tools-for-Models/blob/master/2018-01-30%2007_45_08-Blender_%20%5BE__Documents_Blender_Wasp%20Spaceship%2002%20-%20Fresh%20import%20for%20tutorial.ble.png)
