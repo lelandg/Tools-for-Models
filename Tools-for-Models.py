@@ -27,73 +27,80 @@ If you *did not*, please see my original repository here:
 https://github.com/lelandg/Tools-for-Models
 """, 'category': "TOOLS"}
 
+
 # Removes all decimate modifiers and returns the total number of meshes that were modified.
 def removeAllDecimateModifiers(obj):
     ntotal = 0
     for m in obj.modifiers:
-        if(m.type=="DECIMATE"):
+        if (m.type == "DECIMATE"):
             obj.modifiers.remove(modifier=m)
             ntotal += 1
     return ntotal
 
-def get_symmetry_item(idx=0):
-    if idx < 0 or idx > 2:
-        idx = 0
-    values = ['X', 'Y', 'Z']
-    return (values[idx])
+
+def get_symmetry_item(obj):
+    return obj['decimate_symmetry_axis']
+
+
+def set_symmetry_item(obj, value):
+    obj['decimate_symmetry_axis'] = value
+
 
 def initSceneProperties(scn):
     """Register data types and initialize values stored in each scene, if not already present."""
     bpy.types.Scene.min_distance = FloatProperty(
-        name = "min_distance", 
-        description = "Minimum Distance",
-        default = 0.005,
-        min = 0,
-        max = 1,
-        precision = 3)
+        name="min_distance",
+        description="Minimum Distance",
+        default=0.005,
+        min=0,
+        max=1,
+        precision=3)
     if 'min_distance' not in scn.keys():
         scn['min_distance'] = 0.005
 
     bpy.types.Scene.decimate_ratio = FloatProperty(
-        name = "decimate_ratio",
-        description = "Ratio",
-        default = 0.1,
-        min = 0,
-        max = 1)
+        name="decimate_ratio",
+        description="Ratio",
+        default=0.1,
+        min=0,
+        max=1)
     if 'decimate_ratio' not in scn.keys():
         scn['decimate_ratio'] = 0.1
 
     bpy.types.Scene.decimate_triangulate = BoolProperty(
-        name = "decimate_triangulate",
-        description = "Triangulate",
-        default = False)
+        name="decimate_triangulate",
+        description="Triangulate",
+        default=False)
     if 'decimate_triangulate' not in scn.keys():
         scn['decimate_triangulate'] = False
 
     bpy.types.Scene.decimate_symmetry = BoolProperty(
-        name = "decimate_symmetry",
-        description = "Symmetry",
-        default = False)
+        name="decimate_symmetry",
+        description="Symmetry",
+        default=False)
     if 'decimate_symmetry' not in scn.keys():
         scn['decimate_symmetry'] = False
 
-    bpy.types.Scene.symmetry_axis_items =  [\
-        ("1","X","X"),\
-        ("2","Y","Y"),\
-        ("3","Z","Z")]
+    bpy.types.Scene.symmetry_axis_items = [ \
+        ("1", "X", "0"), \
+        ("2", "Y", "0"), \
+        ("3", "Z", "0")]
 
     #        items, identifier, name, description, default...
     bpy.types.Scene.decimate_symmetry_axis = EnumProperty(
-         items = bpy.types.Scene.symmetry_axis_items,
-         name='decimate_symmetry_axis',
-         default='1',
-         description='Axis of Symmetry',
-         get=get_symmetry_item,
+        items=bpy.types.Scene.symmetry_axis_items,
+        name='decimate_symmetry_axis',
+        default='1',
+        description='Axis of Symmetry',
+        get=get_symmetry_item,
+        set=set_symmetry_item
     )
 
     return
 
+
 initSceneProperties(bpy.context.scene)
+
 
 class SYMMETRY_LIST_OT_Menu(bpy.types.Operator):
     bl_idname = "symmetry_axis.menu"
@@ -104,13 +111,13 @@ class SYMMETRY_LIST_OT_Menu(bpy.types.Operator):
         return context.scene.symmetry_axis_items
 
     axisList = bpy.props.EnumProperty(
-        items = get_items, name = "Symmetry", description = "Symmetry axis choices")
+        items=get_items, name="Symmetry", description="Symmetry axis choices")
 
     def execute(self, context):
         self.report({'INFO'}, 'symmetry_axis.menu.execute(context = "%s")' % (str(context),))
-        bpy.props.selectedStuff = [n for i, n in enumerate(context.scene.symmetry_axis_items)\
-            if n[0] == self.axisList][0]
-        return{'FINISHED'}
+        bpy.props.selectedStuff = [n for i, n in enumerate(context.scene.symmetry_axis_items) \
+                                   if n[0] == self.axisList][0]
+        return {'FINISHED'}
 
 
 class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
@@ -121,14 +128,14 @@ class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
     bl_category = "Tools"
     bl_region_type = 'TOOLS'
     bl_icon = 'WORLD_DATA'
-    #bl_context = "scene"
+    # bl_context = "scene"
 
     def draw(self, context):
         layout = self.layout
 
         row = layout.row(align=True)
         row.alignment = 'EXPAND'
-        row.label(text = '', icon='WORLD_DATA')
+        row.label(text='', icon='WORLD_DATA')
         col = row.column()
         subrow = col.row(align=True)
 
@@ -151,10 +158,9 @@ class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
 
         row = layout.row(align=True)
         row.alignment = 'EXPAND'
-        #row.alignment = 'LEFT'
         row.prop(scene, 'decimate_triangulate', 'Triangulate')
 
-        #Symmetry row
+        # Symmetry rows
         row = layout.row(align=True)
         row.alignment = 'EXPAND'
         split = row.split(percentage=0.5)
@@ -163,9 +169,9 @@ class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
         col.prop(scene, 'decimate_symmetry', 'Symmetry')
         col = split.column(align=True)
         col.alignment = 'LEFT'
-
         col.prop(scene, 'decimate_symmetry_axis', 'Axis')
 
+        # Decimate buttons
         layout.row()
         layout.operator('grd_panel.decimate_globally')
 
@@ -201,10 +207,9 @@ class OBJECT_OT_UnDecimateGloballyButton(bpy.types.Operator):
             self.report({'ERROR'}, '%s' % (traceback.print_exc(),))
             self.report({'ERROR'},
                         'Abort after %d meshes -- see Info window for details. (Are you in Edit mode?)' % (
-                        ncount, ))
+                            ncount,))
 
         return {'FINISHED'}
-
 
 
 class OBJECT_OT_DecimateGloballyButton(bpy.types.Operator):
@@ -216,17 +221,14 @@ class OBJECT_OT_DecimateGloballyButton(bpy.types.Operator):
         ncount = 0
         try:
             scene = context.scene
-            self.report({'INFO'}, 'Got scene...')
             ratio = scene['decimate_ratio']
-            self.report({'INFO'}, 'ratio...')
             triangulate = scene['decimate_triangulate']
-            self.report({'INFO'}, 'triangulate...')
             symmetry = scene['decimate_symmetry']
-            self.report({'INFO'}, 'symmetry = %s %s' % (str(symmetry), type(symmetry)))
+            # self.report({'INFO'}, 'symmetry = %s %s' % (str(symmetry), type(symmetry)))
             symmetry_axis = 'X'
             if symmetry:
                 symmetry_axis = bpy.types.Scene.symmetry_axis_items[scene['decimate_symmetry_axis']][1]
-            self.report({'INFO'}, 'symmetry_axis = "%s" %s' % (str(symmetry_axis), type(symmetry_axis)))
+            # self.report({'INFO'}, 'symmetry_axis = "%s" %s' % (str(symmetry_axis), type(symmetry_axis)))
 
             objectList = bpy.data.objects
             for obj in objectList:
@@ -236,30 +238,24 @@ class OBJECT_OT_DecimateGloballyButton(bpy.types.Operator):
                     removeAllDecimateModifiers(obj)
                     self.report({'INFO'}, '  Removed doubles')
                     modifier = obj.modifiers.new("Decimate", type='DECIMATE')
-                    self.report({'INFO'}, '  got modifier')
                     modifier.decimate_type = 'COLLAPSE'
-                    self.report({'INFO'}, '  set type')
                     modifier.ratio = ratio
-                    self.report({'INFO'}, '  set ratio')
                     modifier.use_collapse_triangulate = triangulate
-                    self.report({'INFO'}, '  set use_collapse_triangulate')
                     modifier.use_symmetry = symmetry
-                    self.report({'INFO'}, '  set symmetry')
                     if symmetry:
                         modifier.symmetry_axis = symmetry_axis
-                        self.report({'INFO'}, '  set symmetry_axis')
 
                     ncount += 1
                     self.report({'INFO'}, '  Finished mesh!')
 
             context.scene.update()
             self.report({'INFO'},
-                        'Finished decimating %d meshes)' % (ncount, ))
+                        'Finished decimating %d meshes)' % (ncount,))
         except:
             self.report({'ERROR'}, '%s' % (traceback.print_exc(),))
             self.report({'ERROR'},
                         'Abort after %d meshes -- see Info window for details.' % (
-                        ncount, ))
+                            ncount,))
 
         return {'FINISHED'}
 
@@ -270,24 +266,24 @@ class OBJECT_OT_GlobalRemoveDoublesButton(bpy.types.Operator):
 
     def execute(self, context):
         ncount = 0
+        mesh_count = len(bpy.data.meshes)
+        total_verts = 0
+        total_verts_removed = 0
         try:
             scene = context.scene
 
             bm = bmesh.new()
             min_distance = scene['min_distance']
-            mesh_count = len(bpy.data.meshes)
-            total_verts = 0
-            total_verts_removed = 0
 
             for m in bpy.data.meshes:
-                self.report({'INFO'}, 'Processing %s' % (str(m), ) )
+                self.report({'INFO'}, 'Processing %s' % (str(m),))
                 bm.from_mesh(m)
                 len1 = len(bm.verts)
                 total_verts += len1
-                self.report({'INFO'}, 'Processing %s: %d verts' % (str(m), len1 ))
+                self.report({'INFO'}, 'Processing %s: %d verts' % (str(m), len1))
                 bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=min_distance)
                 len2 = len(bm.verts)
-                num_removed = len1-len2
+                num_removed = len1 - len2
                 total_verts_removed += num_removed
                 self.report({'INFO'}, 'Processed %s: removed %d of %d verts' % (str(m), (num_removed), len1))
                 bm.to_mesh(m)
@@ -296,13 +292,15 @@ class OBJECT_OT_GlobalRemoveDoublesButton(bpy.types.Operator):
                 ncount += 1
 
             bm.free()
-            self.report({'INFO'}, 'Finished %d meshes: Removed %d of %d verts)' % (mesh_count, total_verts_removed, total_verts))
+            self.report({'INFO'},
+                        'Finished %d meshes: Removed %d of %d verts)' % (mesh_count, total_verts_removed, total_verts))
         except:
-            self.report({'ERROR'}, '%s' % (traceback.print_exc(), ))
-            self.report({'ERROR'}, 'Abort after %d of %d meshes -- see Info window for details. (Are you in Edit mode?): Removed %d of %d verts)' % (ncount, mesh_count, total_verts_removed, total_verts))
+            self.report({'ERROR'}, '%s' % (traceback.print_exc(),))
+            self.report({'ERROR'},
+                        'Abort after %d of %d meshes -- see Info window for details. (Are you in Edit mode?): Removed %d of %d verts)' % (
+                            ncount, mesh_count, total_verts_removed, total_verts))
 
-        return{'FINISHED'}
-
+        return {'FINISHED'}
 
 
 class OBJECT_OT_GlobalDebug(bpy.types.Operator):
@@ -316,15 +314,16 @@ class OBJECT_OT_GlobalDebug(bpy.types.Operator):
         self.reportInfo('Debug:')
         # Your debug stuff here
 
-        return{'FINISHED'}
+        return {'FINISHED'}
 
 
 def register():
     bpy.utils.register_module(__name__)
 
+
 def unregister():
     bpy.utils.unregister_module(__name__)
- 
+
 
 if __name__ == "__main__":
     register()
