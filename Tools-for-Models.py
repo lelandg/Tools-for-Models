@@ -13,7 +13,8 @@ bl_info = {
     'name': "Tools for Models",
     'description': """Written primarily to help automate preparation of models created in Masterpiece VR.
 
-This add-on does (optionally) all of the recommended steps from this forum post by one of the Masterpiece VR developers:
+This add-on will eventually perform all of the recommended steps from this forum post by one of the Masterpiece VR developers
+(right now it does everything except the UV unwrap):
 
 http://forum.masterpiecevr.com/t/how-to-uv-unwrap-an-exported-mpvr-model-in-blender/135
 
