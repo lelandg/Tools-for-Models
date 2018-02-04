@@ -4,11 +4,10 @@ import bpy.props
 import bmesh
 import traceback
 
-# _DEBUG = False
-_DEBUG = True
+_DEBUG = False
 
 bl_info = {
-    'version': (0, 5),
+    'version': (0, 6),
     'blender': (2, 79, 0),
     'author': "Leland Green",
     'name': "Tools for Models",
