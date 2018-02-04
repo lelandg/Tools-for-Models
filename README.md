@@ -2,13 +2,10 @@
 Written to help automate preparation of models created in Masterpiece VR. This add-on does (optionally) all of the recommended steps from this forum post by one of the Masterpiece VR developers:  http://forum.masterpiecevr.com/t/how-to-uv-unwrap-an-exported-mpvr-model-in-blender/135 
 
 # Functions (as of v0.7):
-Remove doubles from all meshes in a scene, given minimum distance.
-
-Decimate all meshes, optionally triangulating and mirroring along specified plane.
-
-Undecimate all meshes.
-
-Smart UV Project, with the option to delete existing UV maps and recreating new ones. If you run without the "Delete UV Maps" box ticked then it runs the UV project only on meshes that do not already have a UV map.
+* Remove doubles from all meshes in a scene, given minimum distance.
+* Decimate all meshes, optionally triangulating and mirroring along specified plane.
+* Undecimate all meshes.
+* Smart UV Project, with the option to delete existing UV maps and recreating new ones. If you run without the "Delete UV Maps" box ticked then it runs the UV project only on meshes that do not already have a UV map.
 
 # Installation
 Simply open the script in a Blender text editor window and click "Run Script". (If you don't know how to do that, see below.)
