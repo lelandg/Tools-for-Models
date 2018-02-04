@@ -1,7 +1,7 @@
 (I'm working on this script.)
 
 # Tools-for-Models
-Written to help automate preparation of models created in Masterpiece VR. This add-on does (optionally) some of the recommended steps from this forum post by one of the Masterpiece VR developers:  http://forum.masterpiecevr.com/t/how-to-uv-unwrap-an-exported-mpvr-model-in-blender/135 I hope to implement all of these steps before too long.
+Written to help automate preparation of models created in Masterpiece VR. This add-on does (optionally) all of the recommended steps from this forum post by one of the Masterpiece VR developers:  http://forum.masterpiecevr.com/t/how-to-uv-unwrap-an-exported-mpvr-model-in-blender/135 
 
 # Functions (as of v0.7):
 Remove doubles from all meshes in a scene, given minimum distance.
@@ -12,10 +12,12 @@ Undecimate all meshes.
 
 Smart UV Project, with the option to delete existing UV maps and recreating new ones. If you run without the "Delete UV Maps" box ticked then it runs the UV project only on meshes that do not already have a UV map.
 
+# Installation
 Simply open the script in a Blender text editor window and click "Run Script". (If you don't know how to do that, see below.)
 
 You should immediately see a panel at the bottom of the Tools tab in any 3D View that looks like this:
 ![Alt text](https://github.com/lelandg/Tools-for-Models/blob/master/2018-02-04%2007_06_31-Blender.png)
+(I've moved it to the top of my Tools panel. You can do that if you'd like.)
 
 If you need help beyond this (below), I could create a video tutorial if needed. I'm looking into making this an "official" add-on, but have no idea of the process.
 
@@ -29,4 +31,8 @@ If you tick the 'Register' checkbox at the bottom of your text window, it will a
 
 If you want the script to always load at startup, you can import it as an add-on (I think... I'll look into this later), or open your startup scene, open the textblock and take the "Register" box and then save the startup scene (File -> Save Startup File). This latter method is confirmed by me to work, so I'd recommend that until I look into actual Blender plugins.
 
-Watch for more updates soon! 😎
+# Usage
+Make sure you're not in Edit mode and then just change the settings and click the buttons to execute.
+
+# Future Plans
+None at the moment. Should this panel do anything else? You're welcome to create an Issue here (to help me remember feature suggestions).
