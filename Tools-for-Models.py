@@ -7,20 +7,21 @@ import traceback
 _DEBUG = False
 
 bl_info = {
-    'version': (0, 6),
+    'version': (0, 7),
     'blender': (2, 79, 0),
     'author': "Leland Green",
     'name': "Tools for Models",
     'description': """Written primarily to help automate preparation of models created in Masterpiece VR.
 
-I believe this add-on will now perform all of the recommended steps from this forum post by one of the Masterpiece VR 
-developers: http://forum.masterpiecevr.com/t/how-to-uv-unwrap-an-exported-mpvr-model-in-blender/135
+I believe this add-on will now perform all of the recommended steps in Blender from this forum post by one of the 
+Masterpiece VR developers: http://forum.masterpiecevr.com/t/how-to-uv-unwrap-an-exported-mpvr-model-in-blender/135
 
-I'm releasing this as open source under the MIT license. 
+Released as open source under the MIT license. 
 
 You should have received a copy of the MIT license with this software. 
 If you *did not*, please see my original repository here: 
 https://github.com/lelandg/Tools-for-Models
+In such a case, I'd like to know about it. Will you create an Issue (or contact me on social media)? 
 """, 'category': "TOOLS"}
 
 
@@ -67,6 +68,7 @@ def __init_data(scn):
     """Register data types and initialize values stored in each scene, if not already present."""
     keys = scn.keys()
 
+    # For Remove Doubles
     bpy.types.Scene.min_distance = bpy.props.FloatProperty(
         name='min_distance',
         description='Minimum distance between elements to merge.',
@@ -76,6 +78,17 @@ def __init_data(scn):
         precision=3)
     if 'min_distance' not in keys:
         scn['min_distance'] = 0.005
+
+    # For Decimate functionality
+    bpy.types.Scene.decimate_ratio = bpy.props.FloatProperty(
+        name='decimate_ratio',
+        description='Decimate Ratio: Ratio of triangles to reduce to (collapse only).',
+        default=0.1,
+        min=1,
+        max=89,
+        precision=4)
+    if 'decimate_ratio' not in keys:
+        scn['decimate_ratio'] = 0.1
 
     bpy.types.Scene.decimate_triangulate = bpy.props.BoolProperty(
         name='decimate_triangulate',
@@ -330,9 +343,13 @@ class OBJECT_OT_SmartUVProject(bpy.types.Operator):
                 self.report({'INFO'},
                             'Smart UV Project performed on %d of %d meshes' % (ncount, ntotal))
             else:
-                self.report({'INFO'},
-                            'UVMap found on all layers. Please tick the "Remove UVs" box to remove all existing UV '
-                            'maps.')
+                if ntotal:
+                    self.report({'WARNING'},
+                                'UVMap found on all layers. Please tick the "Remove UVs" box to '
+                                'remove all existing UV maps.')
+                else:
+                    self.report({'WARNING'},
+                                'No meshes found.')
         except:
             if ncount:
                 self.report({'INFO'},
@@ -361,10 +378,12 @@ class OBJECT_OT_UnDecimateGloballyButton(bpy.types.Operator):
                     ncount += remove_all_decimate_modifiers(obj)
                     ntotal += 1
 
-            self.report({'INFO'},
-                        'Undecimated %d of %d meshes' % (ncount, ntotal))
+            if ntotal:
+                self.report({'INFO'},'Undecimated %d of %d meshes' % (ncount, ntotal))
+            else:
+                self.report({'WARNING'},'No meshes found!')
         except:
-            self.report({'ERROR'}, '%s' % (traceback.print_exc(),))
+            report_exception(self, 'Undecimate Meshes')
             self.report({'ERROR'},
                         'Abort after %d meshes -- see Info window for details. (Are you in Edit mode?)' % (
                             ncount,))
@@ -384,11 +403,13 @@ class OBJECT_OT_DecimateGloballyButton(bpy.types.Operator):
             ratio = scene['decimate_ratio']
             triangulate = scene['decimate_triangulate']
             symmetry = scene['decimate_symmetry']
-            # self.report({'INFO'}, 'symmetry = %s %s' % (str(symmetry), type(symmetry)))
+            if _DEBUG:
+                self.report({'INFO'}, 'symmetry = %s %s' % (str(symmetry), type(symmetry)))
             symmetry_axis = 'X'
             if symmetry:
                 symmetry_axis = bpy.types.Scene.symmetry_axis_items[scene['decimate_symmetry_axis']][1]
-            # self.report({'INFO'}, 'symmetry_axis = "%s" %s' % (str(symmetry_axis), type(symmetry_axis)))
+            if _DEBUG:
+                self.report({'INFO'}, 'symmetry_axis = "%s" %s' % (str(symmetry_axis), type(symmetry_axis)))
 
             object_list = bpy.data.objects
             for obj in object_list:
@@ -409,10 +430,13 @@ class OBJECT_OT_DecimateGloballyButton(bpy.types.Operator):
                     self.report({'INFO'}, '  Finished mesh!')
 
             context.scene.update()
-            self.report({'INFO'},
-                        'Finished decimating %d meshes)' % (ncount,))
+            if ncount:
+                self.report({'INFO'},
+                            'Finished decimating %d meshes' % (ncount,))
+            else:
+                self.report({'WARNING'}, 'No meshes found!')
         except:
-            self.report({'ERROR'}, '%s' % (traceback.print_exc(),))
+            report_exception(self, 'Decimate Meshes')
             self.report({'ERROR'},
                         'Abort after %d meshes -- see Info window for details.' % (
                             ncount,))
@@ -452,13 +476,17 @@ class OBJECT_OT_GlobalRemoveDoublesButton(bpy.types.Operator):
                 ncount += 1
 
             bm.free()
-            self.report({'INFO'},
-                        'Finished %d meshes: Removed %d of %d verts)' % (mesh_count, total_verts_removed, total_verts))
+            if ncount:
+                self.report({'INFO'},
+                         'Finished %d meshes: Removed %d of %d verts' % (mesh_count, total_verts_removed, total_verts))
+            else:
+                self.report({'WARNING'}, 'No meshes found!')
+
         except:
             self.report({'ERROR'}, '%s' % (traceback.print_exc(),))
             self.report({'ERROR'},
                         'Abort after %d of %d meshes -- see Info window for details. (Are you in Edit mode?): Removed '
-                        '%d of %d verts)' % (ncount, mesh_count, total_verts_removed, total_verts))
+                        '%d of %d verts' % (ncount, mesh_count, total_verts_removed, total_verts))
 
         return {'FINISHED'}
 
