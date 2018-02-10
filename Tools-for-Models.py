@@ -3,6 +3,7 @@ import bpy.types
 import bpy.props
 import bmesh
 import traceback
+import time
 
 _DEBUG = False
 
@@ -23,45 +24,6 @@ If you *did not*, please see my original repository here:
 https://github.com/lelandg/Tools-for-Models
 In such a case, I'd like to know about it. Will you create an Issue (or contact me on social media)? 
 """, 'category': "TOOLS"}
-
-
-def report_exception(obj: object, error_from: object):
-    """Formats exception for error window in a manner suitable for end-users.
-    Note: obj MUST contain the ".report()" macro in Blender, so call from e.g. a panel.
-    """
-    formatted_lines = traceback.format_exc().splitlines()
-    lines = []
-    for line in formatted_lines:
-        if len(line):  # Should always be True.
-            msg = line.split(',')[2:]
-            if _DEBUG:
-                obj.report({'INFO'}, 'DEBUG -- report_exception() msg = "%s", line = "%s":' % (msg, line))
-            if len(msg[0:]):
-                lines.append(msg[0])
-            else:
-                lines.append(line)
-
-    obj.report({'ERROR'}, 'Error%s from %s:' % ('s' if len(lines) > 1 else '', error_from))
-    for s in lines:
-        obj.report({'ERROR'}, '%s' % (s,))
-
-
-# Removes all decimate modifiers and returns the total number of meshes that were modified.
-def remove_all_decimate_modifiers(obj):
-    ntotal = 0
-    for m in obj.modifiers:
-        if m.type == "DECIMATE":
-            obj.modifiers.remove(modifier=m)
-            ntotal += 1
-    return ntotal
-
-
-def get_symmetry_item(obj):
-    return obj['decimate_symmetry_axis']
-
-
-def set_symmetry_item(obj, value):
-    obj['decimate_symmetry_axis'] = value
 
 
 def __init_data(scn):
@@ -173,6 +135,46 @@ def __init_data(scn):
 
 __init_data(bpy.context.scene)
 
+def report_exception(obj: object, error_from: object):
+    """Formats exception for error window in a manner suitable for end-users.
+    Note: obj MUST contain the ".report()" macro in Blender, so call from e.g. a panel.
+    """
+    formatted_lines = traceback.format_exc().splitlines()
+    lines = []
+    for line in formatted_lines:
+        if len(line):  # Should always be True.
+            msg = line.split(',')[2:]
+            if _DEBUG:
+                obj.report({'INFO'}, 'DEBUG -- report_exception() msg = "%s", line = "%s":' % (msg, line))
+            if len(msg[0:]):
+                lines.append(msg[0])
+            else:
+                lines.append(line)
+
+    obj.report({'ERROR'}, 'Error%s from %s:' % ('s' if len(lines) > 1 else '', error_from))
+    for s in lines:
+        obj.report({'ERROR'}, '%s' % (s,))
+
+
+# Removes all decimate modifiers and returns the total number of meshes that were modified.
+def remove_all_decimate_modifiers(obj):
+    ntotal = 0
+    for m in obj.modifiers:
+        if m.type == "DECIMATE":
+            obj.modifiers.remove(modifier=m)
+            ntotal += 1
+    return ntotal
+
+
+def get_symmetry_item(obj):
+    return obj['decimate_symmetry_axis']
+
+
+def set_symmetry_item(obj, value):
+    obj['decimate_symmetry_axis'] = value
+
+
+
 
 class SYMMETRY_LIST_OT_Menu(bpy.types.Operator):
     bl_idname = "symmetry_axis.menu"
@@ -205,6 +207,7 @@ class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
     # bl_context = "scene"
 
     def draw(self, context):
+        scene = context.scene
         layout = self.layout
 
         row = layout.row(align=True)
@@ -217,13 +220,17 @@ class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
         subrow = col.row(align=True)
         subrow.alignment = 'EXPAND'
         subrow.label(text='globally, whether they are selected or not.')
-        scene = context.scene
 
+        # Remove Doubles
+        layout.row().separator()
         layout.row()
         layout.prop(scene, 'min_distance', 'Minimum Distance', 'Minimum Distance', slider=True)
 
         layout.row()
         layout.operator('grd_panel.remove_doubles_global')
+
+        # Decimate
+        layout.row().separator()
         row = layout.row()
         row.label(text='Decimate:', icon='MOD_DECIM')
         layout.prop(scene, 'decimate_ratio', 'Ratio', slider=True)
@@ -251,6 +258,15 @@ class VIEW3D_PT_tools_ToolsForModels(bpy.types.Panel):
         layout.operator('grd_panel.undecimate_globally')
 
         # Smart UV Project stuff
+        layout.row().separator()
+        row = layout.row(align=True)
+        row.alignment = 'EXPAND'
+        row.label(text='Smart UV Project', icon='MOD_UVPROJECT')
+        # col = row.column()
+        # subrow = col.row(align=True)
+        #
+        # subrow.label(text='This entire panel operates on all objects')
+
         layout.row()
         layout.prop(scene, 'angle_limit', 'Angle Limit', 'Angle Limit', slider=True)
 
@@ -335,13 +351,15 @@ class OBJECT_OT_SmartUVProject(bpy.types.Operator):
                     obj.select = False
 
             if found_any:
+                time1 = time.time()
                 self.report({'INFO'}, 'Running Smart UV Project on %d meshes...' % (ncount,))
                 bpy.ops.uv.smart_project(angle_limit=angle_limit, island_margin=island_margin,
                                          user_area_weight=area_weight,
                                          use_aspect=correct_aspect, stretch_to_bounds=stretch_to_uv_bounds)
-
+                time2 = time.time()
+                seconds = time2 - time1
                 self.report({'INFO'},
-                            'Smart UV Project performed on %d of %d meshes' % (ncount, ntotal))
+                            'Smart UV Project performed on %d of %d meshes in %d seconds' % (ncount, ntotal, seconds))
             else:
                 if ntotal:
                     self.report({'WARNING'},
@@ -361,6 +379,7 @@ class OBJECT_OT_SmartUVProject(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# noinspection PyBroadException
 class OBJECT_OT_UnDecimateGloballyButton(bpy.types.Operator):
     """UnDecimate all meshes globally, aborting on error and reporting it in the console."""
     bl_idname = 'grd_panel.undecimate_globally'
@@ -370,6 +389,7 @@ class OBJECT_OT_UnDecimateGloballyButton(bpy.types.Operator):
     def execute(self, context):
         ncount = 0
         ntotal = 0
+        # noinspection PyBroadException
         try:
             object_list = bpy.data.objects
             for obj in object_list:
@@ -379,9 +399,9 @@ class OBJECT_OT_UnDecimateGloballyButton(bpy.types.Operator):
                     ntotal += 1
 
             if ntotal:
-                self.report({'INFO'},'Undecimated %d of %d meshes' % (ncount, ntotal))
+                self.report({'INFO'}, 'Undecimated %d of %d meshes' % (ncount, ntotal))
             else:
-                self.report({'WARNING'},'No meshes found!')
+                self.report({'WARNING'}, 'No meshes found!')
         except:
             report_exception(self, 'Undecimate Meshes')
             self.report({'ERROR'},
@@ -398,6 +418,7 @@ class OBJECT_OT_DecimateGloballyButton(bpy.types.Operator):
 
     def execute(self, context):
         ncount = 0
+        # noinspection PyBroadException
         try:
             scene = context.scene
             ratio = scene['decimate_ratio']
@@ -453,6 +474,7 @@ class OBJECT_OT_GlobalRemoveDoublesButton(bpy.types.Operator):
         mesh_count = len(bpy.data.meshes)
         total_verts = 0
         total_verts_removed = 0
+        # noinspection PyBroadException
         try:
             scene = context.scene
 
@@ -478,7 +500,8 @@ class OBJECT_OT_GlobalRemoveDoublesButton(bpy.types.Operator):
             bm.free()
             if ncount:
                 self.report({'INFO'},
-                         'Finished %d meshes: Removed %d of %d verts' % (mesh_count, total_verts_removed, total_verts))
+                            'Finished %d meshes: Removed %d of %d verts' % (
+                                mesh_count, total_verts_removed, total_verts))
             else:
                 self.report({'WARNING'}, 'No meshes found!')
 
